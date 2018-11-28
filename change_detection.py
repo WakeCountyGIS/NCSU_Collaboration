@@ -1,23 +1,7 @@
-import fiona
-import rasterio
-from rasterio.mask import mask
-from rasterio.warp import calculate_default_transform, reproject, Resampling
-import numpy
-import os
-import tarfile
-import re
-import glob
-import errno
-
-
-# Allow division by zero
-numpy.seterr(divide='ignore', invalid='ignore')
-dst_CRS = 'EPSG:2264'
-
 '''
 PSEUDO-CODE
-assumptions: 
-    1 - folder structure is the same for all data collected from Earth Explorer for Analysis Ready Surface Reflectance 
+assumptions:
+    1 - folder structure is the same for all data collected from Earth Explorer for Analysis Ready Surface Reflectance
         data.
         file/folder format - LXSS_US_HHHVVV_YYYYMMDD_yyyymmdd_CCC_VVV_PRODUCT.tar --> ex. LT05_CU_027011_20000908_20170918_C01_V01_SR.tar
         L - landsat
@@ -32,7 +16,7 @@ assumptions:
         VVV	- ARD Version number (“V01,” “V02”)
         PRODUCT	- Data product (“TA” = top of atmosphere reflectance, “BT” = brightness temperature, “SR” = surface reflectance, “ST” = land surface temperature, “QA” = quality assessment)
     2 - the satellite(SS) and date (YYYYMMDD) should allow the code to process each year together and use appropriate bands for LS5 and LS8
-    
+
     input: single folder of .TAR files containing all data
     output: folder of NDVI rasters for each year, folder of change rasters for each time step 95-96, 96-97, and so on
     SETUP OUTPUT FOLDERS
@@ -54,6 +38,21 @@ assumptions:
         WRITE OUT FINAL RASTERS TO CHANGE FOLDER
 '''
 
+import fiona
+import rasterio
+from rasterio.mask import mask
+from rasterio.warp import calculate_default_transform, reproject, Resampling
+import numpy
+import os
+import tarfile
+import re
+import glob
+import errno
+
+# Allow division by zero
+numpy.seterr(divide='ignore', invalid='ignore')
+dst_CRS = 'EPSG:2264'
+
 
 def build_folders(directory):
     """
@@ -64,7 +63,7 @@ def build_folders(directory):
     output_NDVI = os.path.join(directory, 'NDVI')
     max_NDVI = os.path.join(output_NDVI, 'MAX_NDVI')
     change = os.path.join(directory, 'CHANGE')
-    folders= [output_NDVI, max_NDVI, change]
+    folders = [output_NDVI, max_NDVI, change]
     for folder in folders:
         if not os.path.exists(folder):
             try:
@@ -75,16 +74,17 @@ def build_folders(directory):
 
     return folders
 
-# unused function, could be valuable if a different projection is prefered,
-# currently the data remain in the CRS downloaded from Earth Explorer
+
 def reproj_raster(raster):
+    # unused function, could be valuable if a different projection is prefered,
+    # currently the data remain in the CRS downloaded from Earth Explorer
     """
     function to reporject a raster to state plane feet
     :param raster: raster to be projected
     :return: projected raster file path
     """
     path, file = os.path.split(raster)
-    out_raster = os.path.join(path, file[:-4]+'.NC_SPF.tif')
+    out_raster = os.path.join(path, file[:-4] + '.NC_SPF.tif')
     with rasterio.open(raster) as src:
         transform, width, height = calculate_default_transform(
             src.crs, dst_CRS, src.width, src.height, *src.bounds)
@@ -97,7 +97,7 @@ def reproj_raster(raster):
         with rasterio.open(out_raster, 'w', **kwargs) as dst:
             for i in range(1, src.count + 1):
                 reproject(
-                    source=rasterio.band(src,i),
+                    source=rasterio.band(src, i),
                     destination=rasterio.band(dst, i),
                     src_transform=src.transform,
                     src_crs=src.crs,
@@ -199,7 +199,7 @@ def calc_max_ndvi(NDVI_folder, output_folder):
             kwargs = src.meta
         kwargs.update(count=len(tifs))
         with rasterio.open(os.path.join(output_folder, 'stack.tif'.format(year)), 'w+', **kwargs) as stack:
-            for id, tif in enumerate(tifs,start=1):
+            for id, tif in enumerate(tifs, start=1):
                 with rasterio.open(tif) as src:
                     stack.write_band(id, src.read(1))
             stacked_rasters = stack.read()
@@ -277,7 +277,7 @@ def subtract(time_newer, time_later, out_crs, output_dir):
     return change_temp
 
 
-def main(working_dir):
+def run(working_dir):
     try:
         # set up output directories
         output_ndvi, max_ndvi, change = build_folders(working_dir)
@@ -291,4 +291,8 @@ def main(working_dir):
 
 if __name__ == "__main__":
     working_dir = r'D:\BDA\data\Bulk Order 964143\U.S. Landsat 4-8 ARD'
-    main(working_dir)
+    run(working_dir)
+
+## placing the working directory of data downloaded from Earth Explorer as .tar files, the script
+## will process all data into the CHANGE folder resulting in change pixels within the county
+## excluding water bodies and agricultural lands.

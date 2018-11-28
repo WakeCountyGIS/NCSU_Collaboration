@@ -23,7 +23,7 @@
         SET NODATA VALUE WHEN WRITING OUT RASTER TO 0
         WRITE OUT FINAL RASTERS TO CHANGE FOLDER
 
-####Assumptions:
+### Assumptions:
     1 - folder structure is the same for all data collected from Earth Explorer for Analysis Ready Surface Reflectance
         data.
         file/folder format - LXSS_US_HHHVVV_YYYYMMDD_yyyymmdd_CCC_VVV_PRODUCT.tar --> ex. LT05_CU_027011_20000908_20170918_C01_V01_SR.tar

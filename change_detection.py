@@ -16,7 +16,9 @@ assumptions:
         VVV	- ARD Version number (“V01,” “V02”)
         PRODUCT	- Data product (“TA” = top of atmosphere reflectance, “BT” = brightness temperature, “SR” = surface reflectance, “ST” = land surface temperature, “QA” = quality assessment)
     2 - the satellite(SS) and date (YYYYMMDD) should allow the code to process each year together and use appropriate bands for LS5 and LS8
-
+    3 - by using data from throughout the year any cloud coverage will be eliminated without a mask by determining the MAX NDVI value for a
+        given year.
+    4 - Data used are from 1995 - 2015, March - October, with cloud cover and cloud shadow calculated below 30%
     input: single folder of .TAR files containing all data
     output: folder of NDVI rasters for each year, folder of change rasters for each time step 95-96, 96-97, and so on
     SETUP OUTPUT FOLDERS
